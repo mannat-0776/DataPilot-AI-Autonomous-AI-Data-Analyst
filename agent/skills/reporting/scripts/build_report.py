@@ -31,6 +31,7 @@ Output:
 import argparse
 import glob
 import json
+import math
 import os
 from datetime import datetime
 
@@ -39,11 +40,30 @@ import pandas as pd
 MAX_TABLE_ROWS = 20
 
 
+def sanitize_json(val):
+    if isinstance(val, float):
+        if math.isnan(val) or math.isinf(val):
+            return None
+        return val
+    if isinstance(val, dict):
+        return {str(k): sanitize_json(v) for k, v in val.items()}
+    if isinstance(val, (list, tuple)):
+        return [sanitize_json(v) for v in val]
+    if pd.isna(val):
+        return None
+    return val
+
+
 def load_profile(workspace):
     path = os.path.join(workspace, "data", "profile.json")
     if os.path.exists(path):
-        with open(path) as f:
-            return json.load(f)
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                content = f.read()
+                content = content.replace(": NaN", ": null").replace(": -NaN", ": null").replace(": Infinity", ": null")
+                return json.loads(content)
+        except Exception as e:
+            print(f"Warning: could not parse profile.json: {e}")
     return {}
 
 
@@ -283,7 +303,7 @@ def main():
     report = build_report(args.question, args.dataset_name, profile, tables, charts)
 
     with open(output_path, "w") as f:
-        json.dump(report, f, indent=2, default=str)
+        json.dump(sanitize_json(report), f, indent=2, default=str)
     print(f"\nReport saved to {output_path}", flush=True)
     print(f"  Insights: {len(report.get('insights', []))}, "
           f"Charts: {len(report.get('charts', []))}, "

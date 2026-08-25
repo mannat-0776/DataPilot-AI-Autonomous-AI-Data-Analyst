@@ -368,15 +368,22 @@ async function startServer() {
           return res.status(400).json({ error: "No file uploaded" });
         }
 
-        // Inline limit: 1 MB per file
-        const MAX_INLINE_SIZE = 1 * 1024 * 1024; // 1 MB
+        // Max file upload limit: 50 MB per file
+        const MAX_INLINE_SIZE = 50 * 1024 * 1024; // 50 MB
         if (req.file.size > MAX_INLINE_SIZE) {
           return res.status(400).json({
-            error: `File "${req.file.originalname}" is ${(req.file.size / (1024 * 1024)).toFixed(2)} MB, which exceeds the 1MB inline limit. For CSV files larger than 1MB, please use the "Paste a GCS URI" option!`,
+            error: `File "${req.file.originalname}" is ${(req.file.size / (1024 * 1024)).toFixed(2)} MB, which exceeds the maximum allowed upload limit of 50MB.`,
           });
         }
 
-        const content = req.file.buffer.toString("utf-8");
+        const isBinaryFile =
+          /\.(xlsx|xls|parquet|zip|bin|pb|gz|docx|pptx|png|jpg|jpeg)$/i.test(
+            req.file.originalname,
+          ) || req.file.buffer.includes(0);
+
+        const content = isBinaryFile
+          ? `BASE64:${req.file.buffer.toString("base64")}`
+          : req.file.buffer.toString("utf-8");
         const safeOriginalName = req.file.originalname.replace(
           /[^a-zA-Z0-9._-]/g,
           "_",
@@ -490,8 +497,8 @@ ${question}
 
 EXECUTE IMMEDIATELY:
 - Your first response MUST be one code_execution call. Do not explain, plan, quote these instructions, or print code as text.
-- In that one call, discover source files with glob.glob('./workspace/data/*.csv'), clear prior files under data/analysis/ and charts/, analyze the question with Pandas, save result CSVs, and optionally create up to three charts with the existing make_chart.py script.
-- Do not delete source CSVs, profile.json, or the existing report.json before the replacement report is ready.
+- In that one call, run \`python3 /.agents/decode_binary_files.py\` if needed, discover source files with \`glob.glob('./workspace/data/*')\`, clear prior files under data/analysis/ and charts/, analyze the question with Pandas (use \`pd.read_excel()\` for Excel \`.xlsx\` files), save result CSVs, and optionally create up to three charts with the existing make_chart.py script.
+- Do not delete source dataset files, profile.json, or the existing report.json before the replacement report is ready.
 - Do not import seaborn, scipy, statsmodels, or other unlisted packages. Use Pandas, NumPy, and the provided chart script.
 - If the data cannot answer the question or analysis fails, write data/analysis/limitations.csv with columns limitation, detail, and required_data.
 - ALWAYS finish the same code_execution call by running:
@@ -499,7 +506,7 @@ EXECUTE IMMEDIATELY:
 - After the tool output contains "Report saved", return one short sentence and make no more tool calls.`;
     } else {
       const fileNames = uploadedFiles.map((f) => f.name).join(", ");
-      const dataSourceInstructions = `The user provided ${uploadedFiles.length} CSV file(s). ${gcsInstructions} The files will be located at /.agents/data/. Copy them all into ./workspace/data/ before profiling: \`cp /.agents/data/*.csv ./workspace/data/\`. Provided file(s): ${fileNames}.`;
+      const dataSourceInstructions = `The user provided ${uploadedFiles.length} dataset file(s). ${gcsInstructions} The files will be located at /.agents/data/. First decode any binary files: \`python3 /.agents/decode_binary_files.py\`, then copy all files into ./workspace/data/: \`cp /.agents/data/* ./workspace/data/\`. Provided file(s): ${fileNames}.`;
 
       prompt = `You are an expert data analyst. Dataset name: "${effectiveDatasetName}".
 
@@ -517,11 +524,12 @@ You MUST follow this workflow in order. Keep the run short: use one Python scrip
 HARD LIMIT: You have at most 10 code-execution calls for the entire run. Use one setup call, one combined profiling call, one combined analysis call, up to three chart calls, and one report call. Do not run ad hoc inspection, describe, correlation, validation, package-check, or report-preview commands. Put required calculations into the two scripts. Once build_report.py prints "Report saved", immediately conclude without another tool call.
 
 
-1. STAGE & SET UP: Create directories, copy the data, and install the core requirements immediately. Do not assume matplotlib is installed:
+1. STAGE & SET UP: Create directories, decode binary dataset files (.xlsx, .parquet), copy the data, and install core requirements immediately:
   mkdir -p ./workspace/data ./workspace/charts ./workspace/data/analysis && \
-  cp /.agents/data/*.csv ./workspace/data/ && \
-  pip install -r /.agents/requirements.txt --break-system-packages --prefer-binary --no-cache-dir
-  Install scikit-learn separately only if the question genuinely requires an ML model.
+  python3 /.agents/decode_binary_files.py && \
+  cp /.agents/data/* ./workspace/data/ && \
+  pip install -r /.agents/requirements.txt openpyxl --break-system-packages --prefer-binary --no-cache-dir
+  Note: Datasets can be CSV (.csv), Excel (.xlsx, .xls), TSV (.tsv), JSON (.json), or Parquet (.parquet). For Excel files, use \`pd.read_excel()\`.
 
 
 2. EXPLORE: Write and run one concise Pandas profiling script that understands the columns and types and writes './workspace/data/profile.json'. The data-explorer skill is agent-driven; there is no profile_data.py supplied by the skill.
@@ -550,17 +558,17 @@ Therefore, please make sure to run both 'make_chart.py' and 'build_report.py' su
 Example of the required execution order:
 \`\`\`python
 import os
-# Stage data and install core dependencies first
-os.system("mkdir -p ./workspace/data ./workspace/charts ./workspace/data/analysis && cp /.agents/data/*.csv ./workspace/data/ && pip install -r /.agents/requirements.txt --break-system-packages --prefer-binary --no-cache-dir")
+# Stage data, decode binary files, and install dependencies first
+os.system("mkdir -p ./workspace/data ./workspace/charts ./workspace/data/analysis && python3 /.agents/decode_binary_files.py && cp /.agents/data/* ./workspace/data/ && pip install -r /.agents/requirements.txt openpyxl --break-system-packages --prefer-binary --no-cache-dir")
 
 
 # Explore and profile using Pandas here, then write ./workspace/data/profile.json directly.
-# Do not call a nonexistent profiling helper script.
+# (Use pd.read_csv for CSVs or pd.read_excel for Excel files)
 
 
 # Analyze & Save CSV
 import pandas as pd
-df = pd.read_csv('./workspace/data/...')
+# df = pd.read_excel('./workspace/data/...') or pd.read_csv(...)
 # ... perform calculations ...
 df.to_csv('./workspace/data/analysis/results.csv', index=False)
 
@@ -659,17 +667,32 @@ os.system("""python3 /.agents/skills/reporting/scripts/build_report.py --workspa
           "/.agents",
         );
 
-        // Add user dataset files (inline CSVs or GCS URIs)
+        // Add user dataset files (inline text/binary CSVs/Excel or GCS URIs)
         uploadedFiles.forEach((f) => {
           const safeName = path.posix
             .basename(f.name)
             .replace(/[^a-zA-Z0-9._-]/g, "_");
           if (f.content) {
-            agentFiles.push({
-              type: "inline",
-              content: f.content,
-              target: `/.agents/data/${safeName}`,
-            });
+            const isBase64 =
+              f.content.startsWith("BASE64:") ||
+              /\.(xlsx|xls|parquet|zip|bin)$/i.test(f.name);
+
+            if (isBase64) {
+              const rawB64 = f.content.startsWith("BASE64:")
+                ? f.content.slice(7)
+                : Buffer.from(f.content, "binary").toString("base64");
+              agentFiles.push({
+                type: "inline",
+                content: rawB64,
+                target: `/.agents/data/${safeName}.b64`,
+              });
+            } else {
+              agentFiles.push({
+                type: "inline",
+                content: f.content,
+                target: `/.agents/data/${safeName}`,
+              });
+            }
           } else if (f.gsUri) {
             agentFiles.push({
               type: "gcs",
@@ -677,6 +700,32 @@ os.system("""python3 /.agents/skills/reporting/scripts/build_report.py --workspa
               target: "/.agents/data",
             });
           }
+        });
+
+        // Add binary decoder script to restore any base64 binary files (.xlsx, .parquet)
+        const decodeScriptContent = `import base64
+import glob
+import os
+
+data_dir = "/.agents/data"
+if os.path.exists(data_dir):
+    for b64_file in glob.glob(os.path.join(data_dir, "*.b64")):
+        target_file = b64_file[:-4]
+        try:
+            with open(b64_file, "r", encoding="utf-8") as f_in:
+                raw_b64 = f_in.read().strip()
+            with open(target_file, "wb") as f_out:
+                f_out.write(base64.b64decode(raw_b64))
+            print(f"[decode] Successfully decoded binary dataset file: {target_file}")
+            os.remove(b64_file)
+        except Exception as e:
+            print(f"[decode] Error decoding {b64_file}: {e}")
+`;
+
+        agentFiles.push({
+          type: "inline",
+          content: decodeScriptContent,
+          target: "/.agents/decode_binary_files.py",
         });
 
         // Uploads are fetched from GCS inside the sandbox via /.agents/download_gcs.py.
@@ -1078,7 +1127,13 @@ for f in files:
                 normalized === "report.json"
               ) {
                 try {
-                  report = JSON.parse(fileContent.toString("utf8"));
+                  let rawJsonStr = fileContent.toString("utf8");
+                  rawJsonStr = rawJsonStr
+                    .replace(/:\s*NaN\b/g, ": null")
+                    .replace(/:\s*-NaN\b/g, ": null")
+                    .replace(/:\s*Infinity\b/g, ": null")
+                    .replace(/:\s*-Infinity\b/g, ": null");
+                  report = JSON.parse(rawJsonStr);
                 } catch (err) {
                   console.error(
                     "Failed to parse report.json from memory:",

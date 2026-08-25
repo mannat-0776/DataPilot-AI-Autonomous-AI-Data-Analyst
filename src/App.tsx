@@ -8,31 +8,100 @@ import autoTable from 'jspdf-autotable';
 import type {
   ActivityLog, AnalysisReport, ReportChart, ReportTable, UploadedFile,
 } from './types';
-import { LogIn, LogOut, User as UserIcon, Check, Sparkles, Presentation, Database, Zap, ArrowRight, ShieldCheck, Search } from 'lucide-react';
+import { LogIn, LogOut, User as UserIcon, Check, Sparkles, Presentation, Database, Zap, ArrowRight, ShieldCheck, Search, FileSpreadsheet } from 'lucide-react';
 import { D3ChartOverlay } from './components/D3ChartOverlay';
 import { AutopilotPanel } from './components/AutopilotPanel';
+import { CsvValidationCard } from './components/CsvValidationCard';
+import { InteractiveDashboardBuilder } from './components/InteractiveDashboardBuilder';
+import { DataPilotHero } from './components/DataPilotHero';
+import SoftAurora from './components/SoftAurora';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
+import { DatasetDNAProfile } from './components/DatasetDNAProfile';
+import { KnowledgeGraphViewer } from './components/KnowledgeGraphViewer';
+import { AutonomousAgentStatusPanel } from './components/AutonomousAgentStatusPanel';
+import { ExplainableAIPanel } from './components/ExplainableAIPanel';
+import { ModelTransparencyCard } from './components/ModelTransparencyCard';
+import { ReproducibilityBadge } from './components/ReproducibilityBadge';
+import { DeveloperModeDrawer } from './components/DeveloperModeDrawer';
+import { SmartRecommendationsList } from './components/SmartRecommendationsList';
 
-const PixelatedHeader: React.FC = () => {
+interface PixelatedHeaderProps {
+  onOpenCommandPalette: () => void;
+  onToggleDevMode: () => void;
+  isDevMode: boolean;
+}
+
+const PixelatedHeader: React.FC<PixelatedHeaderProps> = ({
+  onOpenCommandPalette,
+  onToggleDevMode,
+  isDevMode
+}) => {
   return (
     <div className="w-full relative overflow-hidden flex flex-col">
-      <div className="h-12 sm:h-16 lg:h-24 w-full relative rounded-t-2xl sm:rounded-t-[1.5rem] overflow-hidden mt-2 mx-2 max-w-[calc(100%-16px)] lg:max-w-screen-2xl lg:mx-auto">
+      <div className="h-16 sm:h-20 lg:h-28 w-full relative rounded-t-2xl sm:rounded-t-[1.5rem] overflow-hidden mt-2 mx-2 max-w-[calc(100%-16px)] lg:max-w-screen-2xl lg:mx-auto shadow-sm">
         <div 
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(135deg, #e93822 0%, #a24db3 50%, #4a78ed 100%)',
-          }}
+          className="absolute inset-0 bg-slate-950"
         />
-        {/* Horizontal bands for pixelated/layered effect */}
-        <div className="absolute top-[35%] left-0 right-0 bottom-0 bg-white/15 backdrop-blur-[2px]" />
-        <div className="absolute top-[65%] left-0 right-0 bottom-0 bg-white/30 backdrop-blur-[6px]" />
+        {/* WebGL SoftAurora Shader Component */}
+        <div className="absolute inset-0 z-0 opacity-90">
+          <SoftAurora
+            speed={0.5}
+            scale={1.3}
+            brightness={1.1}
+            color1="#3b82f6"
+            color2="#8b5cf6"
+            noiseFrequency={2.2}
+            bandHeight={0.4}
+            bandSpread={1.2}
+            enableMouseInteraction={true}
+            mouseInfluence={0.2}
+          />
+        </div>
+
+        {/* Overlay glass sheen & scanlines */}
+        <div className="absolute top-[50%] left-0 right-0 bottom-0 bg-slate-900/40 backdrop-blur-[3px]" />
         
         {/* Light scanlines */}
         <div 
-          className="absolute inset-0 mix-blend-overlay opacity-[0.12]"
+          className="absolute inset-0 mix-blend-overlay opacity-[0.15]"
           style={{
-             backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.2) 3px, rgba(0,0,0,0.2) 6px)`
+             backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.25) 3px, rgba(0,0,0,0.25) 6px)`
           }}
         />
+
+        {/* Header Title & Command Bar Accent */}
+        <div className="absolute inset-0 z-10 flex items-center justify-between px-6 sm:px-8 text-white">
+          <div className="flex items-center gap-3">
+            <div className="h-2.5 w-2.5 rounded-full bg-teal-400 animate-pulse" />
+            <span className="text-xs sm:text-sm font-bold tracking-widest uppercase font-mono drop-shadow-md">
+              DataPilot AI • Autonomous Data OS
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onOpenCommandPalette}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/20 bg-slate-900/70 hover:bg-slate-800 text-xs font-mono transition text-slate-200 cursor-pointer shadow-lg"
+            >
+              <Search className="h-3.5 w-3.5 text-teal-400" />
+              <span>Search OS</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400 border border-white/10 font-mono">
+                Ctrl+K
+              </kbd>
+            </button>
+
+            <button
+              onClick={onToggleDevMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono font-bold transition cursor-pointer ${
+                isDevMode
+                  ? 'border-teal-400/50 bg-teal-500/20 text-[#14F1D9] shadow-lg shadow-teal-500/10'
+                  : 'border-white/10 bg-slate-900/50 text-slate-400 hover:text-white'
+              }`}
+            >
+              <span>{isDevMode ? '✓ DEV MODE' : 'DEV MODE'}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -219,6 +288,26 @@ const App: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
 
+  // New investor-grade state features
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isDevModeOpen, setIsDevModeOpen] = useState(false);
+
+  const handleCommandAction = (actionId: string) => {
+    if (actionId === 'toggle_palette') {
+      setIsCommandPaletteOpen((prev) => !prev);
+    } else if (actionId === 'toggle_dev') {
+      setIsDevModeOpen((prev) => !prev);
+    } else if (actionId === 'run_autopilot') {
+      if (!question.trim()) {
+        setQuestion("Perform an autonomous Autopilot analysis: discover 5 important findings, explain the root causes with evidence and confidence scores, build the dashboard, and recommend next targeted questions.");
+      }
+      setTimeout(() => runAnalysis(), 50);
+    } else if (actionId === 'upload') {
+      const el = document.getElementById('workbench');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const [environmentId, setEnvironmentId] = useState<string | null>(null);
   const [uploadSessionId, setUploadSessionId] = useState(createUploadSessionId);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -240,13 +329,13 @@ const App: React.FC = () => {
   const canRun = status !== 'running' && question.trim() !== '' && files.length > 0;
 
   const addFiles = useCallback(async (fileList: FileList | File[]) => {
-    const csvs = Array.from(fileList).filter((f) => /\.csv$/i.test(f.name));
-    if (csvs.length === 0) return;
+    const validFiles = Array.from(fileList).filter((f) => /\.(csv|tsv|txt|json|xlsx|parquet)$/i.test(f.name) || f.type.includes('csv') || f.type.includes('json') || f.type.includes('text'));
+    if (validFiles.length === 0) return;
 
-    const MAX_INLINE_SIZE = 1 * 1024 * 1024; // 1MB limit for inline analysis
-    const oversizedFiles = csvs.filter((f) => f.size > MAX_INLINE_SIZE);
+    const MAX_INLINE_SIZE = 50 * 1024 * 1024; // 50MB limit
+    const oversizedFiles = validFiles.filter((f) => f.size > MAX_INLINE_SIZE);
     if (oversizedFiles.length > 0) {
-      setErrorMsg(`File size exceeds 1MB inline limit: ${oversizedFiles.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`).join(', ')}. For CSV files > 1MB, please use the "Paste a GCS URI" option!`);
+      setErrorMsg(`File size exceeds 50MB upload limit: ${oversizedFiles.map(f => `${f.name} (${(f.size / (1024 * 1024)).toFixed(2)}MB)`).join(', ')}.`);
       setStatus('error');
       return;
     }
@@ -254,70 +343,55 @@ const App: React.FC = () => {
     setStatus('uploading');
     try {
       const uploaded = await Promise.all(
-        csvs.map(async (file) => {
-          const formData = new FormData();
-          formData.append('file', file);
-          formData.append('sessionId', uploadSessionId);
+        validFiles.map(async (file) => {
+          let content = '';
+          let serverData: any = null;
 
-          const maxAttempts = 5;
-          const retryDelayMs = 2000;
-          let res: Response | null = null;
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('sessionId', uploadSessionId);
 
-          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            res = await fetch('/api/upload', {
+            const res = await fetch('/api/upload', {
               method: 'POST',
               body: formData,
-              redirect: 'manual',
             });
 
-            const wasRedirected =
-              res.type === 'opaqueredirect' ||
-              res.redirected ||
-              (res.status >= 300 && res.status < 400);
-
-            if (!wasRedirected) break;
-            if (attempt === maxAttempts) {
-              throw new Error('The upload service kept redirecting the request. Please try again.');
-            }
-
-            await new Promise(resolve => window.setTimeout(resolve, retryDelayMs));
-          }
-
-          if (!res) {
-            throw new Error('The upload service did not return a response.');
-          }
-
-          const contentType = res.headers.get('content-type')?.toLowerCase() ?? '';
-          if (!res.ok) {
-            let backendErr = "";
-            if (contentType.includes('application/json')) {
-              const errData = await res.json().catch(() => ({}));
-              if (errData.error) {
-                try {
-                   const parsed = JSON.parse(errData.error);
-                   if (parsed.error && parsed.error.message) {
-                     backendErr = parsed.error.message;
-                   }
-                } catch {
-                   backendErr = errData.error;
-                }
+            if (res.ok) {
+              const contentType = res.headers.get('content-type')?.toLowerCase() ?? '';
+              if (contentType.includes('application/json')) {
+                serverData = await res.json();
               }
             }
-            throw new Error(backendErr || `Failed to upload ${file.name}`);
+          } catch (uploadErr) {
+            console.warn('[upload] Server upload endpoint unreachable or failed, using local browser reader fallback:', uploadErr);
           }
 
-          if (!contentType.includes('application/json')) {
-            throw new Error('The upload service returned an unexpected response.');
+          if (serverData && serverData.content) {
+            content = serverData.content;
+          } else {
+            // Client-side fallback: Read file directly in browser memory
+            const isBinary = /\.(xlsx|xls|parquet|zip|bin)$/i.test(file.name);
+            if (isBinary) {
+              const arrayBuffer = await file.arrayBuffer();
+              const bytes = new Uint8Array(arrayBuffer);
+              let binaryStr = '';
+              for (let i = 0; i < bytes.byteLength; i++) {
+                binaryStr += String.fromCharCode(bytes[i]);
+              }
+              content = `BASE64:${btoa(binaryStr)}`;
+            } else {
+              content = await file.text();
+            }
           }
 
-          const data = await res.json();
           return {
             name: file.name,
-            content: data.content,
+            content: content,
             size: file.size,
-            gsUri: data.gsUri,
-            localPath: data.localPath,
-            isLocal: data.isLocal
+            gsUri: serverData?.gsUri,
+            localPath: serverData?.localPath,
+            isLocal: serverData?.isLocal
           } as UploadedFile;
         })
       );
@@ -519,28 +593,12 @@ const App: React.FC = () => {
       const retryDelayMs = 2000;
       let response: Response | null = null;
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: controller.signal,
-          redirect: 'manual',
-        });
-
-        const wasRedirected =
-          response.type === 'opaqueredirect' ||
-          response.redirected ||
-          (response.status >= 300 && response.status < 400);
-
-        if (!wasRedirected) break;
-        if (attempt === maxAttempts) {
-          throw new Error('The analysis service kept redirecting the request. Please try again.');
-        }
-
-        setStage(`Analysis service is not ready. Retrying in ${retryDelayMs / 1000} seconds...`);
-        await waitForRetry(retryDelayMs, controller.signal);
-      }
+      response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
 
       if (!response) {
         throw new Error('The analysis service did not return a response.');
@@ -762,22 +820,22 @@ const App: React.FC = () => {
     });
   };
 
+  const scrollToWorkbench = () => {
+    const el = document.getElementById('workbench');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full bg-[#f6f5f3] text-neutral-900 font-sans flex flex-col pb-12">
-      <PixelatedHeader />
+    <div className="min-h-screen w-full bg-[#020617] text-[#F8FAFC] font-sans flex flex-col pb-12 relative">
+      <PixelatedHeader
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onToggleDevMode={() => setIsDevModeOpen((prev) => !prev)}
+        isDevMode={isDevModeOpen}
+      />
 
-      {/* Navigation / User Profile Header */}
-      <header className="mx-auto max-w-screen-2xl w-full px-6 pt-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="h-2.5 w-2.5 rounded-full bg-io-blue" />
-          <span className="text-sm font-semibold tracking-wider uppercase text-neutral-500 font-mono">Data Analyst Workspace</span>
-        </div>
-        
-        <div className="flex items-center gap-3">
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-screen-2xl w-full px-6 pt-6">
+      <main className="w-full">
         <AnimatePresence mode="wait">
           {(status === 'idle' || status === 'uploading') && !report ? (
             <motion.div
@@ -785,33 +843,40 @@ const App: React.FC = () => {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
+              className="space-y-12"
             >
-              <SetupPanel
-                files={files}
-                dragOver={dragOver}
-                question={question}
-                examples={examples}
-                canRun={canRun}
-                isUploading={status === 'uploading'}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={onDrop}
-                onPickFiles={(fl) => fl && addFiles(fl)}
-                onAddGcsUri={addGcsUriFile}
-                onRemoveFile={removeFile}
-                onQuestionChange={setQuestion}
-                onRun={runAnalysis}
-              />
+              {/* Landing Page Hero & Features */}
+              <DataPilotHero onStartDemo={scrollToWorkbench} />
+
+              {/* Live Analysis Workbench Upload Area */}
+              <div id="workbench" className="max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                <SetupPanel
+                  files={files}
+                  dragOver={dragOver}
+                  question={question}
+                  examples={examples}
+                  canRun={canRun}
+                  isUploading={status === 'uploading'}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(true);
+                  }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={onDrop}
+                  onPickFiles={(fl) => fl && addFiles(fl)}
+                  onAddGcsUri={addGcsUriFile}
+                  onRemoveFile={removeFile}
+                  onQuestionChange={setQuestion}
+                  onRun={runAnalysis}
+                />
+              </div>
             </motion.div>
           ) : (
             <motion.div
               key="run"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="space-y-6"
+              className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 pt-6"
             >
               <RunHeader
                 datasetName={datasetName}
@@ -822,6 +887,10 @@ const App: React.FC = () => {
                 onReset={reset}
               />
               {errorMsg && <ErrorBanner message={errorMsg} />}
+
+              {/* Feature 1, 5, 7: Autonomous Agent Status & Live Reasoning Engine */}
+              <AutonomousAgentStatusPanel status={status} stage={stage} logs={logs} />
+
               <div className="flex flex-col lg:flex-row gap-6 items-start">
                 <div className="w-full lg:w-[360px] xl:w-[420px] shrink-0 lg:sticky lg:top-6">
                   <AgentPanel
@@ -841,10 +910,10 @@ const App: React.FC = () => {
                     <ReportView report={report} onSendFollowUp={(text) => runAnalysis(text)} />
                   ) : (
                     status === 'running' && (
-                      <div className="flex h-[60vh] flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/50 p-8 text-center shadow-sm">
-                        <p className="text-base font-medium text-neutral-700">Report will be generated here</p>
-                        <p className="mt-1.5 max-w-sm text-sm text-neutral-500">
-                          The agent is exploring the data and running your analysis in the background. Your final report and charts will appear in this space when complete.
+                      <div className="flex h-[60vh] flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0F172A]/70 p-8 text-center shadow-xl backdrop-blur-md">
+                        <p className="text-base font-medium text-slate-200">Generating Autonomous Intelligence Report...</p>
+                        <p className="mt-1.5 max-w-sm text-xs text-slate-400 leading-relaxed">
+                          The DataPilot agent is executing Python analysis, cleaning data, and building interactive charts in the background.
                         </p>
                       </div>
                     )
@@ -855,6 +924,22 @@ const App: React.FC = () => {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Feature 6: Command Palette Modal (Ctrl + K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onAction={handleCommandAction}
+        filesCount={files.length}
+      />
+
+      {/* Feature 12: Developer Mode & Code Execution Drawer */}
+      <DeveloperModeDrawer
+        isOpen={isDevModeOpen}
+        onClose={() => setIsDevModeOpen(false)}
+        logs={logs}
+        report={report}
+      />
     </div>
   );
 };
@@ -887,28 +972,31 @@ const SetupPanel: React.FC<SetupProps> = ({
   const [gcsInput, setGcsInput] = useState('');
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="mb-6 mt-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-8">
-        <h1 className="text-4xl sm:text-4xl lg:text-[3.5rem] leading-[1.05] tracking-tight font-sans font-semibold text-neutral-900 w-full md:w-1/2">
-          Ask anything <br className="hidden sm:block" />
-          about your data
-        </h1>
-        <div className="md:w-1/3 md:pt-1 flex flex-col justify-start">
-          <p className="text-sm leading-relaxed text-neutral-800 font-medium">
-            AI Data Analyst delivers interactive data intelligence, analytics, and actionable insights.
-          </p>
-          <p className="mt-3 text-xs text-neutral-600">
-            Upload one or more CSVs, ask a business question, and let the agent autonomously analyze it.
-          </p>
+    <div className="max-w-4xl mx-auto space-y-8 p-8 rounded-3xl border border-white/10 bg-[#0F172A]/80 backdrop-blur-xl shadow-2xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-white/10 pb-6">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-teal-500/30 bg-teal-500/10 text-xs font-semibold text-[#14F1D9] mb-2">
+            <Sparkles className="h-3.5 w-3.5" />
+            <span>DataPilot AI Analysis Engine</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold font-heading text-white">
+            Live Analysis Workbench
+          </h2>
         </div>
+        <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+          Upload raw CSVs or Excel spreadsheets, specify an inquiry or launch full Autopilot mode to auto-detect trends and anomalies.
+        </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
           {/* Step 1: dataset */}
-          <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-neutral-700">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[11px] text-white">1</span>
-              Choose a dataset
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-white font-heading">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">1</span>
+                <span>Upload Dataset File(s)</span>
+              </div>
+              <span className="text-xs font-mono text-slate-400">CSV, XLSX, TSV, Parquet</span>
             </div>
 
             <div
@@ -916,29 +1004,30 @@ const SetupPanel: React.FC<SetupProps> = ({
               onDragLeave={isUploading ? undefined : onDragLeave}
               onDrop={isUploading ? undefined : onDrop}
               onClick={isUploading ? undefined : () => fileInputRef.current?.click()}
-              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-8 text-center transition ${
+              className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition ${
                 isUploading 
-                  ? 'border-neutral-200 bg-neutral-50/50 cursor-wait' 
+                  ? 'border-white/20 bg-slate-800/50 cursor-wait' 
                   : dragOver 
-                    ? 'border-io-blue bg-blue-50 cursor-pointer' 
-                    : 'border-neutral-300 hover:border-neutral-400 cursor-pointer'
+                    ? 'border-[#14F1D9] bg-teal-500/10 cursor-pointer' 
+                    : 'border-white/15 bg-slate-900/80 hover:border-blue-500/50 cursor-pointer'
               }`}
             >
               {isUploading ? (
                 <div className="flex flex-col items-center justify-center space-y-2">
-                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-neutral-800 border-t-transparent" />
-                  <p className="text-sm font-medium text-neutral-700 animate-pulse">Uploading and preparing dataset...</p>
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-teal-400 border-t-transparent" />
+                  <p className="text-xs font-medium text-slate-200 animate-pulse">Uploading and profiling dataset...</p>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm font-medium text-neutral-700">Drop CSV file(s) here or click to browse (&le; 1MB)</p>
-                  <p className="mt-1 text-xs text-neutral-400">Multiple related CSVs are supported for inline agent analysis</p>
+                  <FileSpreadsheet className="h-8 w-8 text-blue-400 mb-2 opacity-80" />
+                  <p className="text-sm font-semibold text-slate-200">Drop CSV / dataset file(s) here or click to browse</p>
+                  <p className="mt-1 text-xs text-slate-400 font-mono">Supports .csv, .tsv, .xlsx, .json, .parquet datasets up to 50MB</p>
                 </>
               )}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,text/csv"
+                accept=".csv,.tsv,.txt,.json,.xlsx,.parquet,text/csv,text/plain,application/json"
                 multiple
                 className="hidden"
                 disabled={isUploading}
@@ -946,14 +1035,14 @@ const SetupPanel: React.FC<SetupProps> = ({
               />
             </div>
 
-            {/* GCS Link input for files larger than 1MB */}
-            <div className="mt-4 border-t border-neutral-100 pt-4">
+            {/* Optional GCS Link input for cloud-stored files */}
+            <div className="border-t border-white/10 pt-4">
               <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-semibold text-neutral-700 flex items-center gap-1.5">
-                  <Database className="h-3.5 w-3.5 text-io-blue" />
-                  Paste a GCS URI for CSVs larger than 1MB
+                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Database className="h-3.5 w-3.5 text-teal-400" />
+                  Paste GCS URI (Optional)
                 </label>
-                <span className="text-[11px] text-neutral-400">Bypasses inline 1MB limit</span>
+                <span className="text-[11px] text-slate-400">Direct Cloud Storage integration</span>
               </div>
               <div className="flex gap-2">
                 <input
@@ -962,7 +1051,7 @@ const SetupPanel: React.FC<SetupProps> = ({
                   value={gcsInput}
                   onChange={(e) => setGcsInput(e.target.value)}
                   disabled={isUploading}
-                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-neutral-300 focus:border-io-blue focus:ring-1 focus:ring-blue-100 outline-none transition disabled:opacity-50"
+                  className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-white/10 bg-slate-900 text-white placeholder-slate-500 focus:border-teal-400 outline-none transition disabled:opacity-50"
                 />
                 <button
                   type="button"
@@ -972,7 +1061,7 @@ const SetupPanel: React.FC<SetupProps> = ({
                     onAddGcsUri(gcsInput.trim());
                     setGcsInput('');
                   }}
-                  className="px-4 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-medium transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Add GCS File
                 </button>
@@ -980,67 +1069,59 @@ const SetupPanel: React.FC<SetupProps> = ({
             </div>
 
             {files.length > 0 && (
-              <ul className="mt-3 space-y-2">
-                {files.map((f) => (
-                  <li
-                     key={f.name}
-                     className="flex items-center justify-between rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm"
-                  >
-                     <span className="flex items-center gap-2 truncate max-w-[80%]">
-                       <span className="truncate font-medium text-neutral-800">{f.name}</span>
-                       <span className="text-[11px] px-2 py-0.5 rounded-full bg-neutral-200/80 text-neutral-600 font-medium truncate">
-                         {f.isGcsUri || (f.gsUri && !f.content)
-                           ? `GCS • ${f.gsUri}`
-                           : `Inline CSV • ${f.size ? (f.size / 1024).toFixed(1) : (f.content ? (f.content.length / 1024).toFixed(1) : '0')} KB`}
+              <>
+                <ul className="space-y-2">
+                  {files.map((f) => (
+                    <li
+                       key={f.name}
+                       className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-800/80 px-4 py-2.5 text-xs text-white"
+                    >
+                       <span className="flex items-center gap-2 truncate max-w-[80%]">
+                         <span className="truncate font-semibold text-slate-200">{f.name}</span>
+                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[#14F1D9] font-mono truncate">
+                           {f.isGcsUri || (f.gsUri && !f.content)
+                             ? `GCS • ${f.gsUri}`
+                             : `Inline CSV • ${f.size ? (f.size / 1024).toFixed(1) : (f.content ? (f.content.length / 1024).toFixed(1) : '0')} KB`}
+                         </span>
                        </span>
-                     </span>
-                     <button 
-                       disabled={isUploading} 
-                       onClick={(e) => { e.stopPropagation(); onRemoveFile(f.name); }} 
-                       className="text-neutral-400 hover:text-io-red font-medium text-xs px-1.5 py-0.5 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
-                     >
-                       Remove
-                     </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+                       <button 
+                         disabled={isUploading} 
+                         onClick={(e) => { e.stopPropagation(); onRemoveFile(f.name); }} 
+                         className="text-slate-400 hover:text-red-400 font-semibold text-xs px-2 py-0.5 disabled:opacity-30 disabled:cursor-not-allowed shrink-0"
+                       >
+                         Remove
+                       </button>
+                    </li>
+                  ))}
+                </ul>
 
-            <div className="mt-4 text-[11px] leading-relaxed text-neutral-500 border-t border-neutral-100 pt-3">
-              By using this feature, you confirm that you have the necessary rights to any content that you upload. Do not generate content that infringes on others’ intellectual property or privacy rights. Your use of this generative AI service is subject to our{' '}
-              <a 
-                href="https://policies.google.com/terms/generative-ai/use-policy" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-io-blue hover:underline font-medium"
-              >
-                Prohibited Use Policy
-              </a>
-              .
-              <br className="mt-1" />
-              Please note that uploads from Google Workspace may be used to develop and improve Google products and services in accordance with our{' '}
-              <a 
-                href="https://ai.google.dev/gemini-api/terms" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-io-blue hover:underline font-medium"
-              >
-                terms
-              </a>
-              .
-            </div>
+                {/* Client-side CSV Schema & Mandatory Column Validation */}
+                <CsvValidationCard files={files} />
+
+                {/* Feature 3: Dataset Intelligence (Dataset DNA) */}
+                <DatasetDNAProfile files={files} />
+              </>
+            )}
           </section>
 
+          {/* Feature 9: Smart Next Actions */}
+          <SmartRecommendationsList
+            disabled={isUploading}
+            onSelectRecommendation={(recPrompt) => {
+              onQuestionChange(recPrompt);
+            }}
+          />
+
           {/* Step 2: question */}
-          <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium text-neutral-700">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-900 text-[11px] text-white">2</span>
-                Ask a business question or launch Autopilot
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-white font-heading">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white">2</span>
+                <span>Business Question or Autopilot Mode</span>
               </div>
-              <span className="flex items-center gap-1 text-xs font-semibold text-io-blue bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/60">
-                <Zap className="h-3 w-3 fill-io-blue" />
-                Autonomous Mode Ready
+              <span className="flex items-center gap-1 text-xs font-semibold text-[#14F1D9] bg-teal-500/10 px-2.5 py-1 rounded-full border border-teal-500/30">
+                <Zap className="h-3 w-3 fill-current" />
+                Autonomous Agent
               </span>
             </div>
             <textarea
@@ -1049,15 +1130,15 @@ const SetupPanel: React.FC<SetupProps> = ({
               disabled={isUploading}
               rows={3}
               placeholder="e.g. Which product categories drive the most revenue, and how is it trending? (Or leave empty for full Autopilot analysis)"
-              className="w-full resize-none rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none transition focus:border-io-blue focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
+              className="w-full resize-none rounded-xl border border-white/10 bg-slate-900 text-slate-100 placeholder-slate-500 px-4 py-3 text-xs sm:text-sm outline-none transition focus:border-teal-400 disabled:opacity-50"
             />
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {examples.map((ex) => (
                 <button
                   key={ex}
                   disabled={isUploading}
                   onClick={() => onQuestionChange(ex)}
-                  className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1.5 text-xs text-neutral-600 transition hover:border-io-blue hover:text-io-blue cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-full border border-white/10 bg-slate-800/80 px-3 py-1.5 text-xs text-slate-300 transition hover:border-teal-400 hover:text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {ex}
                 </button>
@@ -1065,7 +1146,7 @@ const SetupPanel: React.FC<SetupProps> = ({
             </div>
           </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               onClick={() => {
                 if (!question.trim()) {
@@ -1074,20 +1155,26 @@ const SetupPanel: React.FC<SetupProps> = ({
                 setTimeout(() => onRun(), 50);
               }}
               disabled={!canRun || isUploading}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-neutral-900 via-neutral-900 to-slate-900 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition hover:from-black hover:to-neutral-900 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer border border-neutral-800"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-teal-500 hover:opacity-95 px-6 py-4 text-sm font-bold text-white shadow-xl shadow-blue-500/25 transition disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
             >
-              <Zap className="h-4 w-4 fill-sky-300 text-sky-300" />
+              <Zap className="h-4 w-4 fill-current" />
               <span>⚡ Run Autopilot Analysis</span>
             </button>
 
             <button
               onClick={onRun}
               disabled={!canRun || isUploading}
-              className="flex items-center justify-center gap-2 rounded-xl border border-neutral-300 bg-white px-6 py-3.5 text-sm font-semibold text-neutral-800 transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer shadow-xs"
+              className="flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-slate-800 hover:bg-slate-700 px-6 py-4 text-sm font-semibold text-slate-200 transition disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
             >
               <span>Custom Analysis</span>
             </button>
           </div>
+
+          {/* Feature 8: Knowledge Graph Topology */}
+          <KnowledgeGraphViewer />
+
+          {/* Feature 10: Model Architecture Transparency */}
+          <ModelTransparencyCard />
       </div>
     </div>
   );
@@ -2062,6 +2149,11 @@ const ReportView: React.FC<{ report: AnalysisReport; onSendFollowUp: (promptText
             label="Print Preview"
           />
         </div>
+
+        {/* Feature 11: Enterprise Reproducibility Badge */}
+        <div className="mt-4">
+          <ReproducibilityBadge datasetName={report.dataset_name} />
+        </div>
       </section>
 
       {/* Dedicated Autopilot Tab */}
@@ -2151,22 +2243,31 @@ const ReportView: React.FC<{ report: AnalysisReport; onSendFollowUp: (promptText
         </div>
       )}
 
-      {/* Tab 2: Visualizations */}
+      {/* Tab 2: Visualizations & Interactive Chart Studio */}
       {activeTab === 'charts' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <SectionTitle title={`All Visualizations (${validCharts.length})`} />
-            <span className="text-xs text-neutral-500">Click any chart to inspect in full resolution</span>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {validCharts.map((c, i) => (
-              <ChartCard key={i} index={i} chart={c} tables={report.tables} onZoom={() => setZoomedChart(c)} />
-            ))}
-            {validCharts.length === 0 && (
-              <p className="col-span-2 p-12 text-center text-sm text-neutral-400 bg-white rounded-xl border border-neutral-200">
-                No visual charts generated for this analysis.
-              </p>
-            )}
+        <div className="space-y-8">
+          {/* Custom Interactive Dashboard Builder */}
+          <InteractiveDashboardBuilder
+            tables={report.tables}
+            charts={validCharts}
+            datasetName={report.dataset_name}
+          />
+
+          <div className="space-y-4 pt-4 border-t border-neutral-200">
+            <div className="flex items-center justify-between">
+              <SectionTitle title={`AI-Generated Chart Series (${validCharts.length})`} />
+              <span className="text-xs text-neutral-500">Click any chart to inspect in full resolution with D3 analysis overlays</span>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              {validCharts.map((c, i) => (
+                <ChartCard key={i} index={i} chart={c} tables={report.tables} onZoom={() => setZoomedChart(c)} />
+              ))}
+              {validCharts.length === 0 && (
+                <p className="col-span-2 p-12 text-center text-sm text-neutral-400 bg-white rounded-xl border border-neutral-200">
+                  No visual charts generated for this analysis.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -2220,22 +2321,11 @@ const ReportView: React.FC<{ report: AnalysisReport; onSendFollowUp: (promptText
           )}
 
           {report.insights?.length > 0 && (
-            <section>
-              <SectionTitle title="Comprehensive AI Insights" />
-              <div className="grid gap-4 sm:grid-cols-2 mt-3">
+            <section className="space-y-4">
+              <SectionTitle title="Comprehensive AI Insights & Explainable AI (XAI)" />
+              <div className="space-y-4">
                 {report.insights.map((ins, i) => (
-                  <div key={i} className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <h3 className="font-semibold text-neutral-900 text-base">{ins.title}</h3>
-                      {ins.value && (
-                        <span className="shrink-0 rounded-lg bg-blue-50 px-2.5 py-1 text-sm font-bold text-io-blue">
-                          {ins.value}
-                        </span>
-                      )}
-                    </div>
-                    {ins.metric && <p className="mt-1 text-xs uppercase font-mono tracking-wider text-neutral-400">{ins.metric}</p>}
-                    <p className="mt-3 text-sm leading-relaxed text-neutral-600">{ins.detail}</p>
-                  </div>
+                  <ExplainableAIPanel key={i} insight={ins} />
                 ))}
               </div>
             </section>

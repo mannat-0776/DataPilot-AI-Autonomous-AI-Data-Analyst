@@ -11,7 +11,12 @@ export function extractJsonBlocks(text: string): Record<string, unknown>[] {
 
   while ((match = pattern.exec(text)) !== null) {
     try {
-      const parsed = JSON.parse(match[1]);
+      const sanitized = match[1]
+        .replace(/:\s*NaN\b/g, ": null")
+        .replace(/:\s*-NaN\b/g, ": null")
+        .replace(/:\s*Infinity\b/g, ": null")
+        .replace(/:\s*-Infinity\b/g, ": null");
+      const parsed = JSON.parse(sanitized);
       if (Array.isArray(parsed)) {
         results.push(...parsed);
       } else {

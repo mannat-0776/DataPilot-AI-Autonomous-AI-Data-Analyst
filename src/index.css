@@ -1,41 +1,73 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Google+Sans:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Google Sans", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --color-io-blue: #4285f4;
-  --color-io-red: #ea4335;
-  --color-io-yellow: #fbbc04;
-  --color-io-green: #34a853;
+  --color-deep-space: #020617;
+  --color-glass-dark: #0f172a;
+  --color-electric-blue: #3b82f6;
+  --color-neural-purple: #8b5cf6;
+  --color-cyber-teal: #14f1d9;
+  --color-text-light: #f8fafc;
+  --color-text-muted: #94a3b8;
 }
 
 @layer base {
   html, body, #root {
-    height: 100%;
+    min-height: 100%;
     width: 100%;
     margin: 0;
     padding: 0;
+    background-color: #020617;
+    color: #f8fafc;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Space Grotesk", sans-serif;
   }
 }
 
 @layer utilities {
-  .gradient-io {
-    background: linear-gradient(90deg, #4285f4, #34a853, #fbbc04, #ea4335);
+  .font-heading {
+    font-family: "Space Grotesk", sans-serif;
   }
-  .text-gradient-io {
-    background: linear-gradient(90deg, #4285f4, #34a853, #fbbc04, #ea4335);
+  .bg-deep-space {
+    background-color: #020617;
+  }
+  .bg-glass-dark {
+    background-color: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(12px);
+  }
+  .border-glass {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .gradient-brand {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #14f1d9 100%);
+  }
+  .text-gradient-brand {
+    background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #14f1d9 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+  }
+  .glow-teal {
+    box-shadow: 0 0 25px -5px rgba(20, 241, 217, 0.3);
+  }
+  .glow-blue {
+    box-shadow: 0 0 30px -5px rgba(59, 130, 246, 0.35);
+  }
+  .glow-purple {
+    box-shadow: 0 0 30px -5px rgba(139, 92, 246, 0.35);
   }
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
+
 
